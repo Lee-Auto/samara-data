@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Samara Data</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & BASE ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f14;
+  --bg2:#13151c;
+  --bg3:#1a1d27;
+  --border:#ffffff0f;
+  --border2:#ffffff18;
+  --text:#e8eaf0;
+  --muted:#6b7280;
+  --muted2:#4b5563;
+  --accent:#4ade80;
+  --accent2:#22c55e;
+  --accent-dim:#4ade8022;
+  --red:#f87171;
+  --amber:#fbbf24;
+  --blue:#60a5fa;
+  --Z1:#3b82f6; --Z2:#22c55e; --Z3:#f59e0b; --Z4:#ec4899; --Z5:#a78bfa; --Z6:#6b7280;
+  --r:8px; --r2:12px;
+  --mono:'DM Mono',monospace;
+  --sans:'Syne',sans-serif;
+}
+html{font-size:14px;background:var(--bg);color:var(--text);font-family:var(--sans)}
+body{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+button{font-family:var(--sans);cursor:pointer}
+input,select,textarea{font-family:var(--sans);font-size:13px}
+a{color:inherit;text-decoration:none}
+
+/* ── SIDEBAR ── */
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.sidebar-brand{padding:20px 16px 16px;border-bottom:1px solid var(--border)}
+.brand-name{font-size:17px;font-weight:700;letter-spacing:-.3px;color:#fff}
+.brand-tag{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+.nav-section{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);padding:16px 16px 6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 16px;border-radius:var(--r);margin:1px 8px;color:var(--muted);cursor:pointer;transition:all .15s;font-size:13px;font-weight:500;border:none;background:none;width:calc(100% - 16px);text-align:left}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--accent-dim);color:var(--accent)}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid var(--border)}
+.ver-tag{font-family:var(--mono);font-size:10px;color:var(--muted2)}
+
+/* ── MAIN ── */
+.main{display:flex;flex-direction:column;min-height:100vh;overflow:hidden}
+.topbar{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg);position:sticky;top:0;z-index:10}
+.topbar-title{font-size:18px;font-weight:700;letter-spacing:-.3px}
+.topbar-actions{display:flex;gap:8px}
+.page{padding:24px;flex:1}
+
+/* ── COMPONENTS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r);font-size:13px;font-weight:500;border:1px solid transparent;transition:all .15s;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#000;border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent2)}
+.btn-ghost{background:transparent;color:var(--muted);border-color:var(--border2)}
+.btn-ghost:hover{background:var(--bg3);color:var(--text)}
+.btn-danger{background:transparent;color:var(--red);border-color:#f8717130}
+.btn-danger:hover{background:#f8717115}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn svg{width:14px;height:14px}
+
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:space-between}
+.card-body{padding:18px}
+
+.input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:8px 12px;color:var(--text);font-size:13px;outline:none;transition:border .15s}
+.input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:5px}
+
+.table{width:100%;border-collapse:collapse}
+.table th{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border)}
+.table td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px}
+.table tr:last-child td{border-bottom:none}
+.table tr:hover td{background:var(--bg3)}
+.table .actions{display:flex;gap:4px;justify-content:flex-end}
+
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;font-family:var(--mono)}
+.badge-Z1{background:#3b82f620;color:#60a5fa}
+.badge-Z2{background:#22c55e20;color:#4ade80}
+.badge-Z3{background:#f59e0b20;color:#fbbf24}
+.badge-Z4{background:#ec489920;color:#f472b6}
+.badge-Z5{background:#a78bfa20;color:#c4b5fd}
+.badge-Z6{background:#6b728020;color:#9ca3af}
+.badge-success{background:#22c55e20;color:#4ade80}
+.badge-draft{background:#6b728020;color:#9ca3af}
+
+.mono{font-family:var(--mono);font-size:12px}
+
+.empty{text-align:center;padding:48px;color:var(--muted)}
+.empty svg{width:40px;height:40px;margin-bottom:12px;opacity:.3}
+
+/* ── MODAL ── */
+.modal-backdrop{position:fixed;inset:0;background:#00000080;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-backdrop.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;transform:translateY(12px);transition:transform .2s}
+.modal-backdrop.open .modal{transform:translateY(0)}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-weight:600}
+.modal-body{padding:20px}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.form-row{display:grid;gap:14px;margin-bottom:14px}
+.form-row.cols2{grid-template-columns:1fr 1fr}
+.form-row.cols3{grid-template-columns:1fr 1fr 1fr}
+
+/* ── ALERT ── */
+.alert{padding:10px 14px;border-radius:var(--r);margin-bottom:16px;font-size:13px}
+.alert-success{background:#22c55e15;border:1px solid #22c55e30;color:#4ade80}
+.alert-error{background:#f8717115;border:1px solid #f8717130;color:#f87171}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:16px}
+.stat-val{font-size:28px;font-weight:700;letter-spacing:-1px;margin-bottom:2px}
+.stat-label{font-size:11px;color:var(--muted);font-weight:500}
+.stat-accent{color:var(--accent)}
+
+/* ── BOM ── */
+.zona-section{margin-bottom:16px}
+.zona-header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg3);border-radius:var(--r) var(--r) 0 0;border:1px solid var(--border)}
+.zona-dot{width:8px;height:8px;border-radius:50%}
+.zona-count{font-size:11px;color:var(--muted);margin-left:auto;font-family:var(--mono)}
+.zona-table{border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r);overflow:hidden}
+
+/* ── COMPONENTES EDITOR ── */
+.comp-row{display:grid;grid-template-columns:1fr 1fr 80px 80px 32px;gap:6px;align-items:center;padding:6px;background:var(--bg3);border-radius:var(--r);margin-bottom:4px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:12px 16px;font-size:13px;z-index:999;transform:translateY(10px);opacity:0;transition:all .25s;max-width:320px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.toast-ok{border-color:#22c55e40;color:#4ade80}
+.toast.toast-err{border-color:#f8717140;color:#f87171}
+
+/* ── LOADING ── */
+.spinner{width:32px;height:32px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:40px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-name">Samara Data</div>
+    <div class="brand-tag">BOM Management System</div>
+  </div>
+  <div class="nav-section">General</div>
+  <button class="nav-item active" onclick="nav('dashboard')" id="nav-dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Dashboard
+  </button>
+  <div class="nav-section">Catálogo</div>
+  <button class="nav-item" onclick="nav('items')" id="nav-items">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+    Ítems base
+  </button>
+  <button class="nav-item" onclick="nav('articulos')" id="nav-articulos">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Artículos
+  </button>
+  <button class="nav-item" onclick="nav('objetos')" id="nav-objetos">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+    Objetos
+  </button>
+  <div class="nav-section">BOMs</div>
+  <button class="nav-item" onclick="nav('boms')" id="nav-boms">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    BOMs guardados
+  </button>
+  <button class="nav-item" onclick="nav('bom_nuevo')" id="nav-bom_nuevo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    Nuevo BOM
+  </button>
+  <div class="sidebar-footer">
+    <div class="ver-tag">v1.0 · Samara Data</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Dashboard</div>
+    <div class="topbar-actions" id="topbar-actions"></div>
+  </div>
+  <div class="page" id="page-content">
+    <div class="spinner"></div>
+  </div>
+</main>
+
+<!-- MODAL -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="closeModalIfBackdrop(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <span id="modal-title">Modal</span>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ──
+const SUPA_URL = 'https://depsbkiolslzwnfyjayj.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRlcHNia2lvbHNsenduZnlqYXlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3MjE0NTcsImV4cCI6MjA5NDI5NzQ1N30.roW66-l0fIwIRiyiz39d1PVdI2fHIE3Fw43xouFVi8Q';
+const ZONAS = {Z1:'Acero estructural',Z2:'Tubería / plomería / eléctrico',Z3:'Interiores',Z4:'Exteriores',Z5:'Acabados',Z6:'Varios'};
+const UNIDADES = ['pza','mt','ml','kg','lt','m2','m3','rollo','caja','juego','tramo'];
+
+// ── API ──
+async function api(method, table, data=null, query='') {
+  const url = `${SUPA_URL}/rest/v1/${table}${query}`;
+  const opts = {
+    method,
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': `Bearer ${SUPA_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': method==='POST' ? 'return=representation' : method==='PATCH'||method==='PUT' ? 'return=representation' : '',
+    }
+  };
+  if (data) opts.body = JSON.stringify(data);
+  const res = await fetch(url, opts);
+  if (!res.ok) { const e=await res.text(); throw new Error(e); }
+  if (method==='DELETE') return true;
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+const GET = (t,q='') => api('GET',t,null,q);
+const POST = (t,d) => api('POST',t,d);
+const PATCH = (t,q,d) => api('PATCH',t,d,q);
+const DELETE = (t,q) => api('DELETE',t,null,q);
+
+// ── ROUTER ──
+let currentPage = 'dashboard';
+function nav(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  const navEl = document.getElementById('nav-'+page);
+  if (navEl) navEl.classList.add('active');
+  document.getElementById('topbar-actions').innerHTML = '';
+  pages[page]();
+}
+
+// ── TOAST ──
+function toast(msg, ok=true) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${ok?'toast-ok':'toast-err'}`;
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+// ── MODAL ──
+function openModal(title, bodyHTML, footerHTML='') {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHTML;
+  document.getElementById('modal-footer').innerHTML = footerHTML || '<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>';
+  document.getElementById('modal-backdrop').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-backdrop').classList.remove('open'); }
+function closeModalIfBackdrop(e) { if(e.target===document.getElementById('modal-backdrop')) closeModal(); }
+
+// ── RENDER ──
+function setPage(title, html, actions='') {
+  document.getElementById('page-title').textContent = title;
+  document.getElementById('page-content').innerHTML = html;
+  document.getElementById('topbar-actions').innerHTML = actions;
+}
+
+// ── BOM ENGINE (JS) ──
+async function explodeBom(codigoConfig, parametros={}) {
+  const posiciones = parseCodigo(codigoConfig);
+  const allLineas = [];
+
+  const objRows = await GET('objetos','?activo=eq.true&select=*');
+  const objMap = {};
+  objRows.forEach(o => objMap[o.letra_config] = o);
+
+  for (const [pos, letra] of Object.entries(posiciones)) {
+    const obj = objMap[letra.toUpperCase()];
+    if (!obj) continue;
+
+    const oaRows = await GET('objeto_articulos', `?objeto_id=eq.${obj.id}&select=*,articulos(*)`);
+    for (const oa of oaRows) {
+      const cantObj = evalFormula(oa.formula_cantidad, parametros);
+      await explodeArticulo(oa.articulo_id, cantObj, `${obj.nombre} (pos. ${pos})`, oa.articulos.nombre, parametros, allLineas, 0);
+    }
+  }
+
+  // Agrupar por item_id
+  const grouped = {};
+  for (const l of allLineas) {
+    if (grouped[l.item_id]) grouped[l.item_id].cantidad += l.cantidad;
+    else grouped[l.item_id] = {...l};
+  }
+  return Object.values(grouped).sort((a,b) => a.zona.localeCompare(b.zona)||a.nombre.localeCompare(b.nombre));
+}
+
+async function explodeArticulo(artId, cantPadre, origenObj, origenArt, params, lineas, depth) {
+  if (depth > 10) return;
+  const comps = await GET('articulo_componentes', `?articulo_id=eq.${artId}&select=*,items(*),articulos!articulo_componentes_sub_articulo_id_fkey(*)`);
+  for (const c of comps) {
+    const cant = evalFormula(c.formula_cantidad, params) * cantPadre;
+    if (c.item_id && c.items) {
+      lineas.push({item_id:c.item_id, numero_parte:c.items.numero_parte, nombre:c.items.nombre, unidad_medida:c.items.unidad_medida, zona:c.items.zona, cantidad:cant, origen_objeto:origenObj, origen_articulo:origenArt});
+    } else if (c.sub_articulo_id) {
+      const subNombre = c.articulos?.nombre || '';
+      await explodeArticulo(c.sub_articulo_id, cant, origenObj, origenArt+' > '+subNombre, params, lineas, depth+1);
+    }
+  }
+}
+
+function parseCodigo(codigo) {
+  codigo = codigo.toUpperCase().trim();
+  if (codigo.includes(':')) {
+    const r={};
+    codigo.split(',').forEach(p=>{const[k,v]=p.split(':').map(s=>s.trim());r[k]=v;});
+    return r;
+  }
+  const r={};
+  [...codigo].forEach((c,i)=>r[i+1]=c);
+  return r;
+}
+
+function evalFormula(formula, params={}) {
+  formula = formula.trim();
+  if (!isNaN(formula)) return parseFloat(formula);
+  let expr = formula;
+  for (const [k,v] of Object.entries(params)) expr = expr.replaceAll(k, v);
+  try {
+    const r = Function(`"use strict"; return (${expr})`)();
+    return isNaN(r) ? 1 : r;
+  } catch { return 1; }
+}
+
+function fmtCant(n) { return n===Math.floor(n)?n.toString():n.toFixed(4).replace(/\.?0+$/,''); }
+
+// ══════════════════════════════════════════
+// PÁGINAS
+// ══════════════════════════════════════════
+const pages = {
+
+// ── DASHBOARD ──
+async dashboard() {
+  setPage('Dashboard','<div class="spinner"></div>');
+  const [items,arts,objs,boms] = await Promise.all([
+    GET('items','?activo=eq.true&select=count'),
+    GET('articulos','?activo=eq.true&select=count'),
+    GET('objetos','?activo=eq.true&select=count'),
+    GET('boms','?select=count'),
+  ]);
+  const recentBoms = await GET('boms','?select=*&order=created_at.desc&limit=6');
+
+  const cnt = arr => arr[0]?.count ?? arr.length;
+
+  setPage('Dashboard', `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-val stat-accent">${cnt(items)}</div><div class="stat-label">Ítems base</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--blue)">${cnt(arts)}</div><div class="stat-label">Artículos</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--amber)">${cnt(objs)}</div><div class="stat-label">Objetos</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--Z4)">${cnt(boms)}</div><div class="stat-label">BOMs generados</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">BOMs recientes
+        <button class="btn btn-primary btn-sm" onclick="nav('bom_nuevo')">+ Nuevo BOM</button>
+      </div>
+      <table class="table">
+        <thead><tr><th>Nombre</th><th>Código</th><th>Versión</th><th>Estado</th><th>Fecha</th><th></th></tr></thead>
+        <tbody>
+        ${recentBoms.length===0 ? `<tr><td colspan="6" class="empty">Sin BOMs aún</td></tr>` :
+          recentBoms.map(b=>`<tr>
+            <td style="font-weight:500">${b.nombre}</td>
+            <td><span class="mono">${b.codigo_config}</span></td>
+            <td>v${b.version}</td>
+            <td><span class="badge ${b.estado==='finalizado'?'badge-success':'badge-draft'}">${b.estado}</span></td>
+            <td style="color:var(--muted)">${new Date(b.created_at).toLocaleDateString('es-MX')}</td>
+            <td><div class="actions"><button class="btn btn-ghost btn-sm" onclick="verBom(${b.id})">Ver</button></div></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `);
+},
+
+// ── ÍTEMS ──
+async items() {
+  setPage('Ítems base','<div class="spinner"></div>',
+    `<button class="btn btn-primary" onclick="modalItem()">+ Nuevo ítem</button>`);
+  const items = await GET('items','?activo=eq.true&order=zona,nombre');
+  document.getElementById('page-content').innerHTML = `
+    <div class="card">
+      <table class="table">
+        <thead><tr><th>Núm. parte</th><th>Nombre</th><th>Unidad</th><th>Zona</th><th>Descripción</th><th></th></tr></thead>
+        <tbody>
+        ${items.length===0?`<tr><td colspan="6"><div class="empty">Sin ítems. Crea el primero.</div></td></tr>`:
+          items.map(it=>`<tr>
+            <td><span class="mono">${it.numero_parte}</span></td>
+            <td style="font-weight:500">${it.nombre}</td>
+            <td style="color:var(--muted)">${it.unidad_medida}</td>
+            <td><span class="badge badge-${it.zona}">${it.zona}</span></td>
+            <td style="color:var(--muted);font-size:12px">${(it.descripcion||'').substring(0,50)}</td>
+            <td><div class="actions">
+              <button class="btn btn-ghost btn-sm" onclick='modalItem(${JSON.stringify(it)})'>Editar</button>
+              <button class="btn btn-danger btn-sm" onclick="delItem(${it.id})">×</button>
+            </div></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+},
+
+// ── ARTÍCULOS ──
+async articulos() {
+  setPage('Artículos','<div class="spinner"></div>',
+    `<button class="btn btn-primary" onclick="modalArticulo()">+ Nuevo artículo</button>`);
+  const arts = await GET('articulos','?activo=eq.true&order=nombre');
+  document.getElementById('page-content').innerHTML = `
+    <div class="card">
+      <table class="table">
+        <thead><tr><th>Código</th><th>Nombre</th><th>Descripción</th><th></th></tr></thead>
+        <tbody>
+        ${arts.length===0?`<tr><td colspan="4"><div class="empty">Sin artículos.</div></td></tr>`:
+          arts.map(a=>`<tr>
+            <td><span class="mono">${a.codigo}</span></td>
+            <td style="font-weight:500">${a.nombre}</td>
+            <td style="color:var(--muted);font-size:12px">${(a.descripcion||'').substring(0,60)}</td>
+            <td><div class="actions">
+              <button class="btn btn-ghost btn-sm" onclick="modalArticulo(${a.id})">Editar</button>
+              <button class="btn btn-danger btn-sm" onclick="delArticulo(${a.id})">×</button>
+            </div></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+},
+
+// ── OBJETOS ──
+async objetos() {
+  setPage('Objetos','<div class="spinner"></div>',
+    `<button class="btn btn-primary" onclick="modalObjeto()">+ Nuevo objeto</button>`);
+  const objs = await GET('objetos','?activo=eq.true&order=letra_config');
+  document.getElementById('page-content').innerHTML = `
+    <div class="card">
+      <table class="table">
+        <thead><tr><th>Letra</th><th>Nombre</th><th>Tipo</th><th>Descripción</th><th></th></tr></thead>
+        <tbody>
+        ${objs.length===0?`<tr><td colspan="5"><div class="empty">Sin objetos.</div></td></tr>`:
+          objs.map(o=>`<tr>
+            <td><kbd style="background:var(--bg3);padding:3px 8px;border-radius:4px;font-family:var(--mono);font-size:13px">${o.letra_config}</kbd></td>
+            <td style="font-weight:500">${o.nombre}</td>
+            <td style="color:var(--muted)">${o.tipo||''}</td>
+            <td style="color:var(--muted);font-size:12px">${(o.descripcion||'').substring(0,50)}</td>
+            <td><div class="actions">
+              <button class="btn btn-ghost btn-sm" onclick="modalObjeto(${o.id})">Editar</button>
+              <button class="btn btn-danger btn-sm" onclick="delObjeto(${o.id})">×</button>
+            </div></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+},
+
+// ── BOMs LISTA ──
+async boms() {
+  setPage('BOMs guardados','<div class="spinner"></div>',
+    `<button class="btn btn-primary" onclick="nav('bom_nuevo')">+ Nuevo BOM</button>`);
+  const boms = await GET('boms','?order=created_at.desc');
+  document.getElementById('page-content').innerHTML = `
+    <div class="card">
+      <table class="table">
+        <thead><tr><th>Nombre</th><th>Código</th><th>Ver.</th><th>Estado</th><th>Fecha</th><th></th></tr></thead>
+        <tbody>
+        ${boms.length===0?`<tr><td colspan="6"><div class="empty">Sin BOMs.</div></td></tr>`:
+          boms.map(b=>`<tr>
+            <td style="font-weight:500">${b.nombre}</td>
+            <td><span class="mono">${b.codigo_config}</span></td>
+            <td style="color:var(--muted)">v${b.version}</td>
+            <td><span class="badge ${b.estado==='finalizado'?'badge-success':'badge-draft'}">${b.estado}</span></td>
+            <td style="color:var(--muted)">${new Date(b.created_at).toLocaleDateString('es-MX')}</td>
+            <td><div class="actions">
+              <button class="btn btn-ghost btn-sm" onclick="verBom(${b.id})">Ver</button>
+              <button class="btn btn-ghost btn-sm" onclick="nuevaVersion(${b.id})">+ Versión</button>
+              <button class="btn btn-danger btn-sm" onclick="delBom(${b.id})">×</button>
+            </div></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+},
+
+// ── NUEVO BOM ──
+async bom_nuevo() {
+  const objs = await GET('objetos','?activo=eq.true&order=letra_config');
+  setPage('Nuevo BOM', `
+    <div style="display:grid;grid-template-columns:1fr 280px;gap:20px;align-items:start">
+      <div class="card">
+        <div class="card-header">Configurar BOM</div>
+        <div class="card-body">
+          <div class="form-row"><div>
+            <label>Nombre del BOM *</label>
+            <input id="bom_nombre" class="input" placeholder="Ej: Casa Modelo A - Cliente López">
+          </div></div>
+          <div class="form-row"><div>
+            <label>Código de configuración *</label>
+            <input id="bom_codigo" class="input mono" placeholder="Ej: AABC" style="text-transform:uppercase" oninput="previewCodigo(this.value,${JSON.stringify(objs)})">
+            <div id="codigo_preview" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px"></div>
+          </div></div>
+          <div class="form-row"><div>
+            <label>Parámetros (uno por línea: nombre=valor)</label>
+            <textarea id="bom_params" class="input mono" rows="4" placeholder="largo=6.5&#10;ancho=4.2&#10;alto=2.7" style="resize:vertical"></textarea>
+          </div></div>
+          <div class="form-row"><div>
+            <label>Notas</label>
+            <textarea id="bom_notas" class="input" rows="2" style="resize:vertical"></textarea>
+          </div></div>
+          <button class="btn btn-primary" onclick="generarBom()" id="btn_generar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            Generar BOM
+          </button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Objetos disponibles</div>
+        <table class="table">
+          <thead><tr><th>Letra</th><th>Nombre</th></tr></thead>
+          <tbody>
+          ${objs.length===0?`<tr><td colspan="2" class="empty" style="padding:20px">Sin objetos</td></tr>`:
+            objs.map(o=>`<tr><td><kbd style="background:var(--bg3);padding:2px 8px;border-radius:4px;font-family:var(--mono)">${o.letra_config}</kbd></td><td style="font-size:12px">${o.nombre}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `);
+},
+
+};
+
+// ══════════════════════════════════════════
+// ACCIONES
+// ══════════════════════════════════════════
+
+// ── PREVIEW CÓDIGO ──
+function previewCodigo(val, objs) {
+  const div = document.getElementById('codigo_preview');
+  if (!div) return;
+  val = val.toUpperCase();
+  const objMap = {};
+  objs.forEach(o=>objMap[o.letra_config]=o.nombre);
+  const posiciones = parseCodigo(val);
+  div.innerHTML = Object.entries(posiciones).map(([pos,letra])=>{
+    const nombre = objMap[letra];
+    const ok = !!nombre;
+    return `<span style="padding:3px 10px;border-radius:99px;font-size:11px;border:1px solid ${ok?'var(--accent)':'var(--red)'};color:${ok?'var(--accent)':'var(--red)'};font-family:var(--mono)">${pos}:<strong>${letra}</strong>${nombre?' '+nombre:' ?'}</span>`;
+  }).join('');
+}
+
+// ── GENERAR BOM ──
+async function generarBom() {
+  const nombre = document.getElementById('bom_nombre').value.trim();
+  const codigo = document.getElementById('bom_codigo').value.trim().toUpperCase();
+  const paramsRaw = document.getElementById('bom_params').value.trim();
+  const notas = document.getElementById('bom_notas').value.trim();
+  if (!nombre||!codigo) { toast('Nombre y código son requeridos',false); return; }
+
+  const params = {};
+  paramsRaw.split('\n').forEach(l=>{
+    const [k,v]=l.split('=').map(s=>s?.trim());
+    if(k&&v&&!isNaN(v)) params[k]=parseFloat(v);
+  });
+
+  const btn = document.getElementById('btn_generar');
+  btn.textContent = 'Generando…';
+  btn.disabled = true;
+
+  try {
+    const lineas = await explodeBom(codigo, params);
+    if (!lineas.length) { toast('Sin resultados. Verifica que los objetos tengan artículos configurados.',false); btn.textContent='Generar BOM'; btn.disabled=false; return; }
+
+    const [bomArr] = await POST('boms', {nombre, codigo_config:codigo, parametros_json:Object.keys(params).length?params:null, notas, estado:'borrador', version:1});
+    const bomId = bomArr.id;
+
+    await POST('bom_lineas', lineas.map(l=>({bom_id:bomId,item_id:l.item_id,cantidad_calculada:l.cantidad,zona:l.zona,origen_objeto:l.origen_objeto,origen_articulo:l.origen_articulo})));
+
+    toast(`BOM generado con ${lineas.length} ítems`);
+    verBom(bomId);
+  } catch(e) {
+    toast('Error: '+e.message, false);
+    btn.textContent='Generar BOM'; btn.disabled=false;
+  }
+}
+
+// ── VER BOM ──
+async function verBom(id) {
+  currentPage = 'boms';
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-boms')?.classList.add('active');
+  setPage('Cargando BOM…','<div class="spinner"></div>');
+
+  const [bom] = await GET('boms',`?id=eq.${id}&select=*`);
+  const lineas = await GET('bom_lineas',`?bom_id=eq.${id}&select=*,items(numero_parte,unidad_medida)&order=zona,nombre`);
+
+  const byZona = {};
+  lineas.forEach(l=>{ (byZona[l.zona]=byZona[l.zona]||[]).push(l); });
+
+  const total = lineas.length;
+  const exportBtn = `<button class="btn btn-ghost btn-sm" onclick="exportCSV(${id})">↓ CSV</button>`;
+  const versionBtn = `<button class="btn btn-ghost btn-sm" onclick="nuevaVersion(${id})">+ Versión</button>`;
+  const finBtn = bom.estado==='borrador'?`<button class="btn btn-primary btn-sm" onclick="finalizarBom(${id})">Finalizar</button>`:'';
+
+  document.getElementById('page-title').textContent = bom.nombre;
+  document.getElementById('topbar-actions').innerHTML = exportBtn+versionBtn+finBtn;
+
+  const metaParams = bom.parametros_json ? Object.entries(bom.parametros_json).map(([k,v])=>`${k}=${v}`).join(', ') : '';
+
+  document.getElementById('page-content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <span class="badge ${bom.estado==='finalizado'?'badge-success':'badge-draft'}">${bom.estado}</span>
+      <span class="badge" style="background:var(--accent-dim);color:var(--accent)">v${bom.version}</span>
+      <span class="mono" style="color:var(--muted);font-size:12px">Código: ${bom.codigo_config}</span>
+      ${metaParams?`<span style="color:var(--muted);font-size:12px">· ${metaParams}</span>`:''}
+      <span style="color:var(--muted);font-size:12px;margin-left:auto">${total} ítems totales</span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+      ${Object.keys(ZONAS).map(z=>byZona[z]?`<a href="#zona-${z}" style="padding:4px 12px;border-radius:99px;font-size:11px;font-weight:600;font-family:var(--mono)" class="badge badge-${z}">${z}: ${byZona[z].length}</a>`:'').join('')}
+    </div>
+    ${Object.keys(ZONAS).map(z=>{
+      if (!byZona[z]) return '';
+      return `<div class="zona-section" id="zona-${z}">
+        <div class="zona-header">
+          <div class="zona-dot" style="background:var(--${z})"></div>
+          <span style="font-weight:600;font-size:13px">${z} — ${ZONAS[z]}</span>
+          <span class="zona-count">${byZona[z].length} ítems</span>
+        </div>
+        <div class="zona-table">
+          <table class="table">
+            <thead><tr><th>Núm. parte</th><th>Nombre</th><th style="text-align:right">Cantidad</th><th>Unidad</th><th>Origen</th></tr></thead>
+            <tbody>
+            ${byZona[z].map(l=>`<tr>
+              <td><span class="mono">${l.items?.numero_parte||''}</span></td>
+              <td style="font-weight:500">${l.nombre||''}</td>
+              <td style="text-align:right;font-weight:600;font-family:var(--mono)">${fmtCant(parseFloat(l.cantidad_calculada))}</td>
+              <td style="color:var(--muted)">${l.items?.unidad_medida||''}</td>
+              <td style="color:var(--muted);font-size:11px">${l.origen_objeto||''}</td>
+            </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }).join('')}
+    ${bom.notas?`<div class="card" style="margin-top:16px"><div class="card-header">Notas</div><div class="card-body" style="color:var(--muted);font-size:13px">${bom.notas}</div></div>`:''}
+  `;
+}
+
+// ── EXPORT CSV ──
+async function exportCSV(bomId) {
+  const [bom] = await GET('boms',`?id=eq.${bomId}&select=*`);
+  const lineas = await GET('bom_lineas',`?bom_id=eq.${bomId}&select=*,items(numero_parte,unidad_medida)&order=zona`);
+  const rows = [['Zona','Número parte','Nombre','Cantidad','Unidad','Origen objeto','Origen artículo']];
+  lineas.forEach(l=>rows.push([l.zona,l.items?.numero_parte||'',l.nombre||'',fmtCant(parseFloat(l.cantidad_calculada)),l.items?.unidad_medida||'',l.origen_objeto||'',l.origen_articulo||'']));
+  const csv = '\ufeff'+rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = `BOM_${bomId}_v${bom.version}.csv`;
+  a.click();
+}
+
+async function finalizarBom(id) {
+  await PATCH('boms',`?id=eq.${id}`,{estado:'finalizado'});
+  toast('BOM finalizado'); verBom(id);
+}
+
+async function nuevaVersion(id) {
+  if (!confirm('¿Crear una nueva versión de este BOM?')) return;
+  const [orig] = await GET('boms',`?id=eq.${id}&select=*`);
+  const lineas = await GET('bom_lineas',`?bom_id=eq.${id}&select=*`);
+  const [nuevoBom] = await POST('boms',{...orig, id:undefined, nombre:orig.nombre.replace(/ v\d+$/,'')+' v'+(orig.version+1), version:orig.version+1, bom_padre_id:id, estado:'borrador', created_at:undefined});
+  if (lineas.length) await POST('bom_lineas',lineas.map(l=>({...l,id:undefined,bom_id:nuevoBom.id})));
+  toast('Nueva versión creada'); verBom(nuevoBom.id);
+}
+
+async function delBom(id) {
+  if (!confirm('¿Eliminar este BOM?')) return;
+  await DELETE('boms',`?id=eq.${id}`);
+  toast('BOM eliminado'); pages.boms();
+}
+
+// ── MODAL ÍTEM ──
+function modalItem(it=null) {
+  openModal(it?'Editar ítem':'Nuevo ítem', `
+    <div class="form-row"><div><label>Número de parte *</label><input id="it_np" class="input" value="${it?.numero_parte||''}" placeholder="SKU-001"></div></div>
+    <div class="form-row"><div><label>Nombre *</label><input id="it_nombre" class="input" value="${it?.nombre||''}"></div></div>
+    <div class="form-row cols3">
+      <div><label>Unidad</label><select id="it_um" class="input select">${UNIDADES.map(u=>`<option ${u===(it?.unidad_medida||'pza')?'selected':''}>${u}</option>`).join('')}</select></div>
+      <div><label>Zona</label><select id="it_zona" class="input select">${Object.keys(ZONAS).map(z=>`<option ${z===(it?.zona||'Z1')?'selected':''}>${z}</option>`).join('')}</select></div>
+    </div>
+    <div class="form-row"><div><label>Descripción</label><textarea id="it_desc" class="input" rows="2">${it?.descripcion||''}</textarea></div></div>
+  `,`
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveItem(${it?.id||'null'})">Guardar</button>
+  `);
+}
+
+async function saveItem(id) {
+  const d={numero_parte:document.getElementById('it_np').value.trim(),nombre:document.getElementById('it_nombre').value.trim(),unidad_medida:document.getElementById('it_um').value,zona:document.getElementById('it_zona').value,descripcion:document.getElementById('it_desc').value.trim()};
+  if(!d.numero_parte||!d.nombre){toast('Campos requeridos',false);return;}
+  if(id) await PATCH('items',`?id=eq.${id}`,d); else await POST('items',{...d,activo:true});
+  toast(id?'Ítem actualizado':'Ítem creado'); closeModal(); pages.items();
+}
+
+async function delItem(id) {
+  if(!confirm('¿Eliminar este ítem?'))return;
+  await PATCH('items',`?id=eq.${id}`,{activo:false});
+  toast('Ítem eliminado'); pages.items();
+}
+
+// ── MODAL ARTÍCULO ──
+async function modalArticulo(id=null) {
+  const [allItems, allArts] = await Promise.all([
+    GET('items','?activo=eq.true&order=nombre'),
+    GET('articulos','?activo=eq.true&order=nombre'),
+  ]);
+  let art=null, comps=[];
+  if(id){
+    [art]=await GET('articulos',`?id=eq.${id}&select=*`);
+    comps=await GET('articulo_componentes',`?articulo_id=eq.${id}&select=*,items(*),articulos!articulo_componentes_sub_articulo_id_fkey(*)`);
+  }
+
+  const itemOpts = allItems.map(i=>`<option value="item:${i.id}">${i.nombre} (${i.numero_parte})</option>`).join('');
+  const artOpts = allArts.filter(a=>a.id!==id).map(a=>`<option value="art:${a.id}">${a.nombre} (${a.codigo})</option>`).join('');
+
+  openModal(art?'Editar artículo':'Nuevo artículo',`
+    <div class="form-row cols2">
+      <div><label>Código *</label><input id="art_cod" class="input mono" value="${art?.codigo||''}" placeholder="VENT-01"></div>
+      <div><label>Nombre *</label><input id="art_nom" class="input" value="${art?.nombre||''}"></div>
+    </div>
+    <div class="form-row"><div><label>Descripción</label><textarea id="art_desc" class="input" rows="2">${art?.descripcion||''}</textarea></div></div>
+    <div style="margin-bottom:8px;font-size:12px;font-weight:500;color:var(--muted)">Componentes</div>
+    <div id="comps_lista">
+    ${comps.map(c=>`
+      <div class="comp-row">
+        <select class="input select comp-ref" style="grid-column:1/3">
+          <optgroup label="Ítems base">${itemOpts.replace(`value="item:${c.item_id}"`,`value="item:${c.item_id}" selected`)}</optgroup>
+          <optgroup label="Sub-artículos">${artOpts.replace(`value="art:${c.sub_articulo_id}"`,`value="art:${c.sub_articulo_id}" selected`)}</optgroup>
+        </select>
+        <input class="input comp-formula" value="${c.formula_cantidad}" placeholder="fórmula">
+        <input class="input comp-nota" value="${c.notas||''}" placeholder="nota">
+        <button class="btn btn-danger btn-sm" onclick="this.closest('.comp-row').remove()">×</button>
+      </div>`).join('')}
+    </div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addComp('${itemOpts.replace(/'/g,"\\'")}','${artOpts.replace(/'/g,"\\'")}')">+ Componente</button>
+  `,`
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveArticulo(${id||'null'})">Guardar</button>
+  `);
+}
+
+function addComp(itemOpts, artOpts) {
+  const lista=document.getElementById('comps_lista');
+  const d=document.createElement('div'); d.className='comp-row';
+  d.innerHTML=`<select class="input select comp-ref" style="grid-column:1/3"><optgroup label="Ítems base">${itemOpts}</optgroup><optgroup label="Sub-artículos">${artOpts}</optgroup></select><input class="input comp-formula" value="1" placeholder="fórmula"><input class="input comp-nota" placeholder="nota"><button class="btn btn-danger btn-sm" onclick="this.closest('.comp-row').remove()">×</button>`;
+  lista.appendChild(d);
+}
+
+async function saveArticulo(id) {
+  const d={codigo:document.getElementById('art_cod').value.trim(),nombre:document.getElementById('art_nom').value.trim(),descripcion:document.getElementById('art_desc').value.trim()};
+  if(!d.codigo||!d.nombre){toast('Campos requeridos',false);return;}
+  let artId=id;
+  if(id) await PATCH('articulos',`?id=eq.${id}`,d);
+  else { const [r]=await POST('articulos',{...d,activo:true}); artId=r.id; }
+  await DELETE('articulo_componentes',`?articulo_id=eq.${artId}`);
+  const compRows=[...document.querySelectorAll('#comps_lista .comp-row')];
+  if(compRows.length){
+    const comps=compRows.map((row,i)=>{
+      const ref=row.querySelector('.comp-ref').value;
+      const [tipo,refId]=ref.split(':');
+      return {articulo_id:artId,item_id:tipo==='item'?parseInt(refId):null,sub_articulo_id:tipo==='art'?parseInt(refId):null,formula_cantidad:row.querySelector('.comp-formula').value||'1',notas:row.querySelector('.comp-nota').value,orden:i};
+    });
+    await POST('articulo_componentes',comps);
+  }
+  toast(id?'Artículo actualizado':'Artículo creado'); closeModal(); pages.articulos();
+}
+
+async function delArticulo(id) {
+  if(!confirm('¿Eliminar?'))return;
+  await PATCH('articulos',`?id=eq.${id}`,{activo:false});
+  toast('Eliminado'); pages.articulos();
+}
+
+// ── MODAL OBJETO ──
+async function modalObjeto(id=null) {
+  const allArts=await GET('articulos','?activo=eq.true&order=nombre');
+  let obj=null, oarts=[];
+  if(id){[obj]=await GET('objetos',`?id=eq.${id}&select=*`);oarts=await GET('objeto_articulos',`?objeto_id=eq.${id}&select=*,articulos(*)`); }
+  const artOpts=allArts.map(a=>`<option value="${a.id}">${a.nombre}</option>`).join('');
+  openModal(obj?'Editar objeto':'Nuevo objeto',`
+    <div class="form-row cols2">
+      <div><label>Letra config *</label><input id="obj_letra" class="input mono" style="text-transform:uppercase" value="${obj?.letra_config||''}" maxlength="20" placeholder="A"></div>
+      <div><label>Tipo</label><input id="obj_tipo" class="input" value="${obj?.tipo||'pared'}" placeholder="pared, baño…"></div>
+    </div>
+    <div class="form-row"><div><label>Nombre *</label><input id="obj_nom" class="input" value="${obj?.nombre||''}"></div></div>
+    <div class="form-row"><div><label>Descripción</label><textarea id="obj_desc" class="input" rows="2">${obj?.descripcion||''}</textarea></div></div>
+    <div style="margin-bottom:8px;font-size:12px;font-weight:500;color:var(--muted)">Artículos que lo componen</div>
+    <div id="oarts_lista">
+    ${oarts.map(oa=>`<div class="comp-row" style="grid-template-columns:1fr 80px 32px">
+      <select class="input select oa-ref">${allArts.map(a=>`<option value="${a.id}"${a.id==oa.articulo_id?' selected':''}>${a.nombre}</option>`).join('')}</select>
+      <input class="input oa-formula" value="${oa.formula_cantidad}" placeholder="cant.">
+      <button class="btn btn-danger btn-sm" onclick="this.closest('.comp-row').remove()">×</button>
+    </div>`).join('')}
+    </div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addObjArt('${artOpts.replace(/'/g,"\\'")}')">+ Artículo</button>
+  `,`
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveObjeto(${id||'null'})">Guardar</button>
+  `);
+}
+
+function addObjArt(artOpts){
+  const lista=document.getElementById('oarts_lista');
+  const d=document.createElement('div');d.className='comp-row';d.style.gridTemplateColumns='1fr 80px 32px';
+  d.innerHTML=`<select class="input select oa-ref">${artOpts}</select><input class="input oa-formula" value="1" placeholder="cant."><button class="btn btn-danger btn-sm" onclick="this.closest('.comp-row').remove()">×</button>`;
+  lista.appendChild(d);
+}
+
+async function saveObjeto(id){
+  const d={letra_config:document.getElementById('obj_letra').value.trim().toUpperCase(),nombre:document.getElementById('obj_nom').value.trim(),descripcion:document.getElementById('obj_desc').value.trim(),tipo:document.getElementById('obj_tipo').value.trim()};
+  if(!d.letra_config||!d.nombre){toast('Campos requeridos',false);return;}
+  let objId=id;
+  if(id) await PATCH('objetos',`?id=eq.${id}`,d);
+  else{const[r]=await POST('objetos',{...d,activo:true});objId=r.id;}
+  await DELETE('objeto_articulos',`?objeto_id=eq.${objId}`);
+  const rows=[...document.querySelectorAll('#oarts_lista .comp-row')];
+  if(rows.length){
+    const arts=rows.map((row,i)=>({objeto_id:objId,articulo_id:parseInt(row.querySelector('.oa-ref').value),formula_cantidad:row.querySelector('.oa-formula').value||'1',orden:i}));
+    await POST('objeto_articulos',arts);
+  }
+  toast(id?'Objeto actualizado':'Objeto creado'); closeModal(); pages.objetos();
+}
+
+async function delObjeto(id){
+  if(!confirm('¿Eliminar?'))return;
+  await PATCH('objetos',`?id=eq.${id}`,{activo:false});
+  toast('Eliminado'); pages.objetos();
+}
+
+// ── INIT ──
+nav('dashboard');
+</script>
+</body>
+</html>
