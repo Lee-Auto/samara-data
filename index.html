@@ -288,10 +288,12 @@ async function explodeBom(codigoConfig, parametros={}) {
     const obj = objMap[letra.toUpperCase()];
     if (!obj) continue;
 
-    const oaRows = await GET('objeto_articulos', `?objeto_id=eq.${obj.id}&select=*,articulos(*)`);
+    const oaRows = await GET('objeto_articulos', `?objeto_id=eq.${obj.id}&select=*`);
     for (const oa of oaRows) {
       const cantObj = evalFormula(oa.formula_cantidad, parametros);
-      await explodeArticulo(oa.articulo_id, cantObj, `${obj.nombre} (pos. ${pos})`, oa.articulos.nombre, parametros, allLineas, 0);
+      const artRows = await GET('articulos', `?id=eq.${oa.articulo_id}&select=nombre&limit=1`);
+      const artNombre = artRows[0]?.nombre || '';
+      await explodeArticulo(oa.articulo_id, cantObj, `${obj.nombre} (pos. ${pos})`, artNombre, parametros, allLineas, 0);
     }
   }
 
@@ -306,14 +308,28 @@ async function explodeBom(codigoConfig, parametros={}) {
 
 async function explodeArticulo(artId, cantPadre, origenObj, origenArt, params, lineas, depth) {
   if (depth > 10) return;
-  const comps = await GET('articulo_componentes', `?articulo_id=eq.${artId}&select=*,items(*),articulos!articulo_componentes_sub_articulo_id_fkey(*)`);
+  const comps = await GET('articulo_componentes', `?articulo_id=eq.${artId}&select=*`);
   for (const c of comps) {
     const cant = evalFormula(c.formula_cantidad, params) * cantPadre;
-    if (c.item_id && c.items) {
-      lineas.push({item_id:c.item_id, numero_parte:c.items.numero_parte, nombre:c.items.nombre, unidad_medida:c.items.unidad_medida, zona:c.items.zona, cantidad:cant, origen_objeto:origenObj, origen_articulo:origenArt});
+    if (c.item_id) {
+      const itemRows = await GET('items', `?id=eq.${c.item_id}&select=*&limit=1`);
+      const item = itemRows[0];
+      if (item) {
+        lineas.push({
+          item_id: c.item_id,
+          numero_parte: item.numero_parte,
+          nombre: item.nombre,
+          unidad_medida: item.unidad_medida,
+          zona: item.zona,
+          cantidad: cant,
+          origen_objeto: origenObj,
+          origen_articulo: origenArt
+        });
+      }
     } else if (c.sub_articulo_id) {
-      const subNombre = c.articulos?.nombre || '';
-      await explodeArticulo(c.sub_articulo_id, cant, origenObj, origenArt+' > '+subNombre, params, lineas, depth+1);
+      const subRows = await GET('articulos', `?id=eq.${c.sub_articulo_id}&select=nombre&limit=1`);
+      const subNombre = subRows[0]?.nombre || '';
+      await explodeArticulo(c.sub_articulo_id, cant, origenObj, origenArt + ' > ' + subNombre, params, lineas, depth + 1);
     }
   }
 }
