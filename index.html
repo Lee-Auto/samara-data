@@ -722,19 +722,22 @@ async function delItem(id) {
 }
 
 // ── MODAL ARTÍCULO ──
+let _artItemsCache = [];
+let _artArtsCache  = [];
+
 async function modalArticulo(id=null) {
   const [allItems, allArts] = await Promise.all([
     GET('items','?activo=eq.true&order=nombre'),
     GET('articulos','?activo=eq.true&order=nombre'),
   ]);
+  _artItemsCache = allItems;
+  _artArtsCache  = allArts.filter(a => a.id !== id);
+
   let art=null, comps=[];
   if(id){
     [art]=await GET('articulos',`?id=eq.${id}&select=*`);
     comps=await GET('articulo_componentes',`?articulo_id=eq.${id}&select=*,items(*),articulos!articulo_componentes_sub_articulo_id_fkey(*)`);
   }
-
-  const itemOpts = allItems.map(i=>`<option value="item:${i.id}">${i.nombre} (${i.numero_parte})</option>`).join('');
-  const artOpts = allArts.filter(a=>a.id!==id).map(a=>`<option value="art:${a.id}">${a.nombre} (${a.codigo})</option>`).join('');
 
   openModal(art?'Editar artículo':'Nuevo artículo',`
     <div class="form-row cols2">
@@ -743,30 +746,73 @@ async function modalArticulo(id=null) {
     </div>
     <div class="form-row"><div><label>Descripción</label><textarea id="art_desc" class="input" rows="2">${art?.descripcion||''}</textarea></div></div>
     <div style="margin-bottom:8px;font-size:12px;font-weight:500;color:var(--muted)">Componentes</div>
-    <div id="comps_lista">
-    ${comps.map(c=>`
-      <div class="comp-row">
-        <select class="input select comp-ref" style="grid-column:1/3">
-          <optgroup label="Ítems base">${itemOpts.replace(`value="item:${c.item_id}"`,`value="item:${c.item_id}" selected`)}</optgroup>
-          <optgroup label="Sub-artículos">${artOpts.replace(`value="art:${c.sub_articulo_id}"`,`value="art:${c.sub_articulo_id}" selected`)}</optgroup>
-        </select>
-        <input class="input comp-formula" value="${c.formula_cantidad}" placeholder="fórmula">
-        <input class="input comp-nota" value="${c.notas||''}" placeholder="nota">
-        <button class="btn btn-danger btn-sm" onclick="this.closest('.comp-row').remove()">×</button>
-      </div>`).join('')}
-    </div>
-    <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addComp('${itemOpts.replace(/'/g,"\\'")}','${artOpts.replace(/'/g,"\\'")}')">+ Componente</button>
+    <div id="comps_lista"></div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addComp()">+ Componente</button>
   `,`
     <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
     <button class="btn btn-primary" onclick="saveArticulo(${id||'null'})">Guardar</button>
   `);
+
+  // Agregar filas existentes con JS (sin pasar HTML como string en atributos)
+  comps.forEach(c => addComp(c));
 }
 
-function addComp(itemOpts, artOpts) {
-  const lista=document.getElementById('comps_lista');
-  const d=document.createElement('div'); d.className='comp-row';
-  d.innerHTML=`<select class="input select comp-ref" style="grid-column:1/3"><optgroup label="Ítems base">${itemOpts}</optgroup><optgroup label="Sub-artículos">${artOpts}</optgroup></select><input class="input comp-formula" value="1" placeholder="fórmula"><input class="input comp-nota" placeholder="nota"><button class="btn btn-danger btn-sm" onclick="this.closest('.comp-row').remove()">×</button>`;
-  lista.appendChild(d);
+function buildCompSelect(selectedVal='') {
+  const sel = document.createElement('select');
+  sel.className = 'input select comp-ref';
+  sel.style.gridColumn = '1/3';
+  const g1 = document.createElement('optgroup');
+  g1.label = 'Ítems base';
+  _artItemsCache.forEach(i => {
+    const o = document.createElement('option');
+    o.value = `item:${i.id}`;
+    o.textContent = `${i.nombre} (${i.numero_parte})`;
+    if (selectedVal === `item:${i.id}`) o.selected = true;
+    g1.appendChild(o);
+  });
+  const g2 = document.createElement('optgroup');
+  g2.label = 'Sub-artículos';
+  _artArtsCache.forEach(a => {
+    const o = document.createElement('option');
+    o.value = `art:${a.id}`;
+    o.textContent = `${a.nombre} (${a.codigo})`;
+    if (selectedVal === `art:${a.id}`) o.selected = true;
+    g2.appendChild(o);
+  });
+  sel.appendChild(g1);
+  sel.appendChild(g2);
+  return sel;
+}
+
+function addComp(existing=null) {
+  const lista = document.getElementById('comps_lista');
+  const row = document.createElement('div');
+  row.className = 'comp-row';
+
+  const selectedVal = existing
+    ? (existing.item_id ? `item:${existing.item_id}` : `art:${existing.sub_articulo_id}`)
+    : '';
+
+  const formula = document.createElement('input');
+  formula.className = 'input comp-formula';
+  formula.placeholder = 'fórmula';
+  formula.value = existing?.formula_cantidad || '1';
+
+  const nota = document.createElement('input');
+  nota.className = 'input comp-nota';
+  nota.placeholder = 'nota';
+  nota.value = existing?.notas || '';
+
+  const del = document.createElement('button');
+  del.className = 'btn btn-danger btn-sm';
+  del.textContent = '×';
+  del.onclick = () => row.remove();
+
+  row.appendChild(buildCompSelect(selectedVal));
+  row.appendChild(formula);
+  row.appendChild(nota);
+  row.appendChild(del);
+  lista.appendChild(row);
 }
 
 async function saveArticulo(id) {
@@ -795,11 +841,15 @@ async function delArticulo(id) {
 }
 
 // ── MODAL OBJETO ──
+let _objArtsCache = [];
+
 async function modalObjeto(id=null) {
-  const allArts=await GET('articulos','?activo=eq.true&order=nombre');
+  _objArtsCache = await GET('articulos','?activo=eq.true&order=nombre');
   let obj=null, oarts=[];
-  if(id){[obj]=await GET('objetos',`?id=eq.${id}&select=*`);oarts=await GET('objeto_articulos',`?objeto_id=eq.${id}&select=*,articulos(*)`); }
-  const artOpts=allArts.map(a=>`<option value="${a.id}">${a.nombre}</option>`).join('');
+  if(id){
+    [obj]=await GET('objetos',`?id=eq.${id}&select=*`);
+    oarts=await GET('objeto_articulos',`?objeto_id=eq.${id}&select=*,articulos(*)`);
+  }
   openModal(obj?'Editar objeto':'Nuevo objeto',`
     <div class="form-row cols2">
       <div><label>Letra config *</label><input id="obj_letra" class="input mono" style="text-transform:uppercase" value="${obj?.letra_config||''}" maxlength="20" placeholder="A"></div>
@@ -808,25 +858,49 @@ async function modalObjeto(id=null) {
     <div class="form-row"><div><label>Nombre *</label><input id="obj_nom" class="input" value="${obj?.nombre||''}"></div></div>
     <div class="form-row"><div><label>Descripción</label><textarea id="obj_desc" class="input" rows="2">${obj?.descripcion||''}</textarea></div></div>
     <div style="margin-bottom:8px;font-size:12px;font-weight:500;color:var(--muted)">Artículos que lo componen</div>
-    <div id="oarts_lista">
-    ${oarts.map(oa=>`<div class="comp-row" style="grid-template-columns:1fr 80px 32px">
-      <select class="input select oa-ref">${allArts.map(a=>`<option value="${a.id}"${a.id==oa.articulo_id?' selected':''}>${a.nombre}</option>`).join('')}</select>
-      <input class="input oa-formula" value="${oa.formula_cantidad}" placeholder="cant.">
-      <button class="btn btn-danger btn-sm" onclick="this.closest('.comp-row').remove()">×</button>
-    </div>`).join('')}
-    </div>
-    <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addObjArt('${artOpts.replace(/'/g,"\\'")}')">+ Artículo</button>
+    <div id="oarts_lista"></div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addObjArt()">+ Artículo</button>
   `,`
     <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
     <button class="btn btn-primary" onclick="saveObjeto(${id||'null'})">Guardar</button>
   `);
+
+  oarts.forEach(oa => addObjArt(oa));
 }
 
-function addObjArt(artOpts){
-  const lista=document.getElementById('oarts_lista');
-  const d=document.createElement('div');d.className='comp-row';d.style.gridTemplateColumns='1fr 80px 32px';
-  d.innerHTML=`<select class="input select oa-ref">${artOpts}</select><input class="input oa-formula" value="1" placeholder="cant."><button class="btn btn-danger btn-sm" onclick="this.closest('.comp-row').remove()">×</button>`;
-  lista.appendChild(d);
+function buildObjArtSelect(selectedId=null) {
+  const sel = document.createElement('select');
+  sel.className = 'input select oa-ref';
+  _objArtsCache.forEach(a => {
+    const o = document.createElement('option');
+    o.value = a.id;
+    o.textContent = a.nombre;
+    if (a.id == selectedId) o.selected = true;
+    sel.appendChild(o);
+  });
+  return sel;
+}
+
+function addObjArt(existing=null) {
+  const lista = document.getElementById('oarts_lista');
+  const row = document.createElement('div');
+  row.className = 'comp-row';
+  row.style.gridTemplateColumns = '1fr 80px 32px';
+
+  const formula = document.createElement('input');
+  formula.className = 'input oa-formula';
+  formula.placeholder = 'cant.';
+  formula.value = existing?.formula_cantidad || '1';
+
+  const del = document.createElement('button');
+  del.className = 'btn btn-danger btn-sm';
+  del.textContent = '×';
+  del.onclick = () => row.remove();
+
+  row.appendChild(buildObjArtSelect(existing?.articulo_id || null));
+  row.appendChild(formula);
+  row.appendChild(del);
+  lista.appendChild(row);
 }
 
 async function saveObjeto(id){
